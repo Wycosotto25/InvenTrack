@@ -1,0 +1,722 @@
+//index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>InvenTrack — Inventory Management System</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ============================================================
+       LOGIN SCREEN
+  ============================================================ -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-bg">
+      <div class="login-blob blob1"></div>
+      <div class="login-blob blob2"></div>
+      <div class="login-blob blob3"></div>
+    </div>
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="login-brand-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <h1 class="login-brand-name">InvenTrack</h1>
+        <p class="login-brand-sub">Inventory Management System</p>
+      </div>
+      <div class="login-form-area">
+        <h2 class="login-title">Welcome back</h2>
+        <p class="login-subtitle">Sign in to your account to continue.</p>
+        <div class="login-field">
+          <label for="loginUsername">Username</label>
+          <div class="login-input-wrap">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="loginUsername" placeholder="admin" autocomplete="username"/>
+          </div>
+          <span class="login-error" id="err-username"></span>
+        </div>
+        <div class="login-field">
+          <label for="loginPassword">Password</label>
+          <div class="login-input-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+            <button type="button" class="toggle-pw" id="togglePw" title="Show/hide password">
+              <i class="fa-solid fa-eye" id="pwEyeIcon"></i>
+            </button>
+          </div>
+          <span class="login-error" id="err-password"></span>
+        </div>
+        <div class="login-alert" id="loginAlert" style="display:none">
+          <i class="fa-solid fa-circle-xmark"></i>
+          <span id="loginAlertMsg">Invalid credentials.</span>
+        </div>
+        <button class="login-btn" id="loginBtn" onclick="handleLogin()">
+          <span id="loginBtnText"><i class="fa-solid fa-right-to-bracket"></i> Sign In</span>
+          <span id="loginBtnLoader" style="display:none"><i class="fa-solid fa-spinner fa-spin"></i> Signing in…</span>
+        </button>
+        <div class="login-hint">
+          <i class="fa-solid fa-circle-info"></i>
+          Please enter your credentials to access InvenTrack.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MAIN APP
+  ============================================================ -->
+  <div class="app-wrapper" id="appWrapper" style="display:none">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">InvenTrack</span>
+          <span class="brand-tagline">Management System</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main Menu</div>
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-page="products">
+          <i class="fa-solid fa-box"></i><span>Products</span>
+          <span class="nav-badge" id="nav-product-count">0</span>
+        </a>
+        <a href="#" class="nav-item" data-page="analytics">
+          <i class="fa-solid fa-chart-bar"></i><span>Analytics</span>
+        </a>
+
+        <div class="nav-section-label">Administration</div>
+        <a href="#" class="nav-item" data-page="users">
+          <i class="fa-solid fa-users"></i><span>Users</span>
+          <span class="nav-badge" id="nav-user-count">0</span>
+        </a>
+        <a href="#" class="nav-item" data-page="logs">
+          <i class="fa-solid fa-clipboard-list"></i><span>Inventory Logs</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar"><i class="fa-solid fa-user-tie"></i></div>
+          <div class="user-info">
+            <span class="user-name" id="sidebarUsername">Admin User</span>
+            <span class="user-role" id="sidebarRole">Inventory Manager</span>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()" title="Sign out">
+          <i class="fa-solid fa-right-from-bracket"></i><span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content" id="mainContent">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menuToggle"><i class="fa-solid fa-bars"></i></button>
+          <div class="page-title-area">
+            <h1 class="page-title" id="pageTitle">Dashboard</h1>
+            <div class="breadcrumb">
+              <span>Home</span>
+              <i class="fa-solid fa-chevron-right"></i>
+              <span id="breadcrumbCurrent">Dashboard</span>
+            </div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-btn" title="Refresh data" onclick="refreshAll()">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+          <div class="topbar-time" id="currentTime"></div>
+          <div class="topbar-user">
+            <div class="topbar-avatar"><i class="fa-solid fa-user-tie"></i></div>
+            <span id="topbarUsername">Admin</span>
+          </div>
+          <button class="topbar-logout-btn" onclick="handleLogout()" title="Sign out">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- ======================================================
+           PAGE: DASHBOARD
+      ====================================================== -->
+      <section class="page active" id="page-dashboard">
+        <div class="summary-grid">
+          <div class="summary-card card-blue">
+            <div class="card-icon"><i class="fa-solid fa-box"></i></div>
+            <div class="card-content">
+              <span class="card-value" id="stat-total-products">0</span>
+              <span class="card-label">Total Products</span>
+            </div>
+            <div class="card-trend"><i class="fa-solid fa-arrow-trend-up"></i> Active</div>
+          </div>
+          <div class="summary-card card-teal">
+            <div class="card-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="card-content">
+              <span class="card-value" id="stat-total-stock">0</span>
+              <span class="card-label">Total Stock Units</span>
+            </div>
+            <div class="card-trend"><i class="fa-solid fa-cubes"></i> Units</div>
+          </div>
+          <div class="summary-card card-amber">
+            <div class="card-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="card-content">
+              <span class="card-value" id="stat-low-stock">0</span>
+              <span class="card-label">Low Stock Items</span>
+            </div>
+            <div class="card-trend"><i class="fa-solid fa-circle-exclamation"></i> &lt;10 units</div>
+          </div>
+          <div class="summary-card card-purple">
+            <div class="card-icon"><i class="fa-solid fa-tag"></i></div>
+            <div class="card-content">
+              <span class="card-value" id="stat-total-value">₱0</span>
+              <span class="card-label">Total Inventory Value</span>
+            </div>
+            <div class="card-trend"><i class="fa-solid fa-peso-sign"></i> Value</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card wide">
+            <div class="chart-header">
+              <h3><i class="fa-solid fa-chart-column"></i> Stock Quantities by Product</h3>
+            </div>
+            <div class="chart-body"><canvas id="barChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3><i class="fa-solid fa-chart-pie"></i> Category Distribution</h3>
+            </div>
+            <div class="chart-body"><canvas id="pieChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-bell"></i> Low Stock Alerts</h3>
+            <span class="badge-alert" id="alert-count">0 items</span>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Product Name</th><th>Category</th><th>Quantity</th><th>Status</th><th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="lowStockTableBody">
+                <tr><td colspan="5" class="empty-row">No low stock items</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           PAGE: PRODUCTS
+      ====================================================== -->
+      <section class="page" id="page-products">
+        <div class="action-bar">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search products…" oninput="filterProducts()"/>
+          </div>
+          <div class="filter-group">
+            <select id="filterCategory" onchange="filterProducts()">
+              <option value="">All Categories</option>
+            </select>
+            <select id="sortSelect" onchange="sortProducts()">
+              <option value="">Sort By</option>
+              <option value="name-asc">Name A→Z</option>
+              <option value="name-desc">Name Z→A</option>
+              <option value="qty-asc">Qty Low→High</option>
+              <option value="qty-desc">Qty High→Low</option>
+              <option value="price-asc">Price Low→High</option>
+              <option value="price-desc">Price High→Low</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="openAddModal()">
+            <i class="fa-solid fa-plus"></i> Add Product
+          </button>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-table"></i> Product Inventory</h3>
+            <span class="record-count" id="recordCount">0 records</span>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table sortable-table" id="productsTable">
+              <thead>
+                <tr>
+                  <th class="sortable" data-col="id"># <i class="fa-solid fa-sort"></i></th>
+                  <th class="sortable" data-col="name">Name <i class="fa-solid fa-sort"></i></th>
+                  <th class="sortable" data-col="category">Category <i class="fa-solid fa-sort"></i></th>
+                  <th class="sortable" data-col="quantity">Qty <i class="fa-solid fa-sort"></i></th>
+                  <th class="sortable" data-col="price">Price <i class="fa-solid fa-sort"></i></th>
+                  <th>Date Added</th>
+                  <th>Added By</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody">
+                <tr><td colspan="9" class="empty-row"><i class="fa-solid fa-box-open"></i> No products found</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           PAGE: ANALYTICS
+      ====================================================== -->
+      <section class="page" id="page-analytics">
+        <div class="analytics-header-row">
+          <h2 class="analytics-title"><i class="fa-solid fa-flask"></i> Quantitative Descriptive Analysis</h2>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-block">
+            <div class="stat-icon"><i class="fa-solid fa-calculator"></i></div>
+            <div class="stat-info">
+              <span class="stat-val" id="ana-mean">0</span>
+              <span class="stat-name">Mean Stock</span>
+              <span class="stat-desc">Average stock level across all products</span>
+            </div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="stat-info">
+              <span class="stat-val" id="ana-median">0</span>
+              <span class="stat-name">Median Stock</span>
+              <span class="stat-desc">Middle value of sorted stock levels</span>
+            </div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
+            <div class="stat-info">
+              <span class="stat-val" id="ana-mode">0</span>
+              <span class="stat-name">Mode Stock</span>
+              <span class="stat-desc">Most frequent stock level</span>
+            </div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-icon"><i class="fa-solid fa-percent"></i></div>
+            <div class="stat-info">
+              <span class="stat-val" id="ana-lowpct">0%</span>
+              <span class="stat-name">Low Stock %</span>
+              <span class="stat-desc">Percentage of items below threshold</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="decision-grid">
+          <div class="decision-card">
+            <div class="decision-header">
+              <i class="fa-solid fa-brain"></i>
+              <h3>Decision Theory — Restock Recommendations</h3>
+            </div>
+            <div id="decisionList" class="decision-list">
+              <p class="empty-text">Add products to see recommendations.</p>
+            </div>
+          </div>
+          <div class="probability-card">
+            <div class="decision-header">
+              <i class="fa-solid fa-dice"></i>
+              <h3>Probability Analysis</h3>
+            </div>
+            <div class="probability-body">
+              <div class="prob-item">
+                <span class="prob-label">P(Stock Runout Soon)</span>
+                <div class="prob-bar-wrap">
+                  <div class="prob-bar" id="probBar" style="width:0%"></div>
+                </div>
+                <span class="prob-val" id="probVal">0%</span>
+              </div>
+              <p class="prob-explanation" id="probExplanation">
+                Based on the frequency of low-stock items relative to total products.
+              </p>
+              <div class="prob-formula">
+                <code>P(runout) = Low Stock Items / Total Products</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-table-cells"></i> Frequency Distribution of Stock Levels</h3>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Stock Range</th><th>Frequency</th><th>Relative Frequency</th><th>Cumulative Frequency</th><th>Visual</th>
+                </tr>
+              </thead>
+              <tbody id="freqTableBody">
+                <tr><td colspan="5" class="empty-row">No data available</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card wide">
+            <div class="chart-header">
+              <h3><i class="fa-solid fa-chart-bar"></i> Average Stock by Category</h3>
+            </div>
+            <div class="chart-body"><canvas id="categoryChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3><i class="fa-solid fa-chart-area"></i> Stock Distribution</h3>
+            </div>
+            <div class="chart-body"><canvas id="distChart"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           PAGE: USERS
+      ====================================================== -->
+      <section class="page" id="page-users">
+        <div class="action-bar">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="userSearchInput" placeholder="Search users…" oninput="filterUsers()"/>
+          </div>
+          <div class="filter-group">
+            <select id="filterRole" onchange="filterUsers()">
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="staff">Staff</option>
+              <option value="viewer">Viewer</option>
+            </select>
+            <select id="filterStatus" onchange="filterUsers()">
+              <option value="">All Status</option>
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="openAddUserModal()">
+            <i class="fa-solid fa-user-plus"></i> Add User
+          </button>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-users"></i> User Management</h3>
+            <span class="record-count" id="userRecordCount">0 records</span>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="usersTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Username</th>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Last Login</th>
+                  <th>Date Added</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="9" class="empty-row"><i class="fa-solid fa-users"></i> No users found</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================
+           PAGE: INVENTORY LOGS
+      ====================================================== -->
+      <section class="page" id="page-logs">
+        <div class="action-bar">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="logSearchInput" placeholder="Search logs…" oninput="filterLogs()"/>
+          </div>
+          <div class="filter-group">
+            <select id="filterLogAction" onchange="filterLogs()">
+              <option value="">All Actions</option>
+              <option value="ADD">ADD</option>
+              <option value="UPDATE">UPDATE</option>
+              <option value="RESTOCK">RESTOCK</option>
+              <option value="DELETE">DELETE</option>
+              <option value="ADJUST">ADJUST</option>
+            </select>
+            <select id="filterLogLimit" onchange="loadLogsPage()">
+              <option value="50">Last 50</option>
+              <option value="100" selected>Last 100</option>
+              <option value="250">Last 250</option>
+              <option value="500">Last 500</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="openAddLogModal()">
+            <i class="fa-solid fa-plus"></i> Add Log Entry
+          </button>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-clipboard-list"></i> Inventory Activity Logs</h3>
+            <span class="record-count" id="logRecordCount">0 records</span>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="logsTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Product</th>
+                  <th>Action</th>
+                  <th>Qty Before</th>
+                  <th>Qty After</th>
+                  <th>Change</th>
+                  <th>Changed By</th>
+                  <th>Note</th>
+                  <th>Date &amp; Time</th>
+                </tr>
+              </thead>
+              <tbody id="logsTableBody">
+                <tr><td colspan="9" class="empty-row">No logs found</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ============================================================
+         MODAL: Add / Edit Product
+    ============================================================ -->
+    <div class="modal-overlay" id="productModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modalTitle"><i class="fa-solid fa-plus"></i> Add New Product</h2>
+          <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="productForm" onsubmit="return false;">
+            <input type="hidden" id="editId"/>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="fname">Product Name <span class="req">*</span></label>
+                <input type="text" id="fname" placeholder="e.g. Wireless Mouse" maxlength="80"/>
+                <span class="form-error" id="err-fname"></span>
+              </div>
+              <div class="form-group">
+                <label for="fcategory">Category <span class="req">*</span></label>
+                <select id="fcategory">
+                  <option value="">— Select Category —</option>
+                </select>
+                <span class="form-error" id="err-fcategory"></span>
+              </div>
+              <div class="form-group">
+                <label for="fquantity">Quantity <span class="req">*</span></label>
+                <input type="number" id="fquantity" placeholder="0" min="0" step="1"/>
+                <span class="form-error" id="err-fquantity"></span>
+              </div>
+              <div class="form-group">
+                <label for="fprice">Unit Price (₱) <span class="req">*</span></label>
+                <input type="number" id="fprice" placeholder="0.00" min="0" step="0.01"/>
+                <span class="form-error" id="err-fprice"></span>
+              </div>
+              <div class="form-group full-width">
+                <label for="fdesc">Description <span class="optional">(optional)</span></label>
+                <textarea id="fdesc" rows="2" placeholder="Short product description…" maxlength="200"></textarea>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveProduct()">
+            <i class="fa-solid fa-floppy-disk"></i> Save Product
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MODAL: Add / Edit User
+    ============================================================ -->
+    <div class="modal-overlay" id="userModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="userModalTitle"><i class="fa-solid fa-user-plus"></i> Add New User</h2>
+          <button class="modal-close" onclick="closeUserModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="userForm" onsubmit="return false;">
+            <input type="hidden" id="editUserId"/>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="fuUsername">Username <span class="req">*</span></label>
+                <input type="text" id="fuUsername" placeholder="e.g. jdelacruz" maxlength="40"/>
+                <span class="form-error" id="err-fuUsername"></span>
+              </div>
+              <div class="form-group">
+                <label for="fuEmail">Email <span class="req">*</span></label>
+                <input type="email" id="fuEmail" placeholder="user@example.com" maxlength="120"/>
+                <span class="form-error" id="err-fuEmail"></span>
+              </div>
+              <div class="form-group">
+                <label for="fuFullName">Full Name</label>
+                <input type="text" id="fuFullName" placeholder="e.g. Juan Dela Cruz" maxlength="100"/>
+              </div>
+              <div class="form-group">
+                <label for="fuRole">Role <span class="req">*</span></label>
+                <select id="fuRole">
+                  <option value="">— Select Role —</option>
+                </select>
+                <span class="form-error" id="err-fuRole"></span>
+              </div>
+              <div class="form-group">
+                <label for="fuPassword">Password <span id="pwHint" class="optional">(leave blank to keep current)</span></label>
+                <input type="password" id="fuPassword" placeholder="••••••••" maxlength="255"/>
+                <span class="form-error" id="err-fuPassword"></span>
+              </div>
+              <div class="form-group">
+                <label for="fuStatus">Status</label>
+                <select id="fuStatus">
+                  <option value="1">Active</option>
+                  <option value="0">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeUserModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveUser()">
+            <i class="fa-solid fa-floppy-disk"></i> Save User
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MODAL: Add Log Entry (manual)
+    ============================================================ -->
+    <div class="modal-overlay" id="logModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2><i class="fa-solid fa-clipboard-list"></i> Add Log Entry</h2>
+          <button class="modal-close" onclick="closeLogModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <form id="logForm" onsubmit="return false;">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="flProduct">Product <span class="req">*</span></label>
+                <select id="flProduct">
+                  <option value="">— Select Product —</option>
+                </select>
+                <span class="form-error" id="err-flProduct"></span>
+              </div>
+              <div class="form-group">
+                <label for="flAction">Action <span class="req">*</span></label>
+                <select id="flAction">
+                  <option value="ADD">ADD</option>
+                  <option value="UPDATE">UPDATE</option>
+                  <option value="RESTOCK">RESTOCK</option>
+                  <option value="ADJUST">ADJUST</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="flQtyBefore">Qty Before</label>
+                <input type="number" id="flQtyBefore" placeholder="0" min="0" step="1"/>
+              </div>
+              <div class="form-group">
+                <label for="flQtyAfter">Qty After</label>
+                <input type="number" id="flQtyAfter" placeholder="0" min="0" step="1"/>
+              </div>
+              <div class="form-group full-width">
+                <label for="flNote">Note <span class="optional">(optional)</span></label>
+                <textarea id="flNote" rows="2" placeholder="Reason or note…" maxlength="200"></textarea>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeLogModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveLogEntry()">
+            <i class="fa-solid fa-floppy-disk"></i> Save Entry
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MODAL: Confirm Delete (generic)
+    ============================================================ -->
+    <div class="modal-overlay" id="deleteModal">
+      <div class="modal modal-sm">
+        <div class="modal-header danger">
+          <h2><i class="fa-solid fa-trash"></i> Delete <span id="deleteModalLabel">Item</span></h2>
+          <button class="modal-close" onclick="closeDeleteModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body center">
+          <div class="delete-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <p>Are you sure you want to delete <strong id="deleteName"></strong>?<br/>This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+          <button class="btn btn-danger" onclick="confirmDelete()">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         MODAL: Confirm Logout
+    ============================================================ -->
+    <div class="modal-overlay" id="logoutModal">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h2><i class="fa-solid fa-right-from-bracket" style="color:var(--blue)"></i> Sign Out</h2>
+          <button class="modal-close" onclick="closeLogoutModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body center">
+          <div class="delete-icon" style="color:var(--blue)"><i class="fa-solid fa-right-from-bracket"></i></div>
+          <p>Are you sure you want to sign out?<br/>You will be returned to the login screen.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeLogoutModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="confirmLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.app-wrapper -->
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <i class="toast-icon" id="toastIcon"></i>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
